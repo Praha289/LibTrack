@@ -129,6 +129,99 @@
     .borrow-card button:hover {
       background-color: #3e2899;
     }
+    /* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .main-content {
+    padding: 20px;
+  }
+
+  .search-bar input {
+    width: 80%;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .filters .filter-chip {
+    margin: 5px 0;
+  }
+
+  #dueTable th, #dueTable td {
+    padding: 10px;
+  }
+
+  #dueTable {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .main-content {
+    padding: 10px;
+  }
+
+  .search-bar input {
+    width: 100%;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  #dueTable {
+    font-size: 0.8rem;
+  }
+}
+ .search-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  margin: 30px auto;
+  width: 100%;
+}
+
+.search-bar input {
+  width: 60%; /* You can increase/decrease this as needed */
+  padding: 12px 20px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 30px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s;
+}
+
+.search-bar input:focus {
+  border-color: #301179;
+  outline: none;
+}
+
+
   </style>
 </head>
 <body>
@@ -139,67 +232,101 @@
 
   <div class="container">
     <div class="sidebar">
-      <button class="box-button">BOOKS</button>
-      <button class="box-button">BORROWED</button>
-      <button class="box-button">STUDENT LOG</button>
-    </div>
 
+    <button class="box-button" onclick="location.href='allbooksadmin.html'">BOOKS</button>
+<button class="box-button" onclick="location.href='duebooks.html'">DUES OF BOOKS</button>
+<button class="box-button" onclick="location.href='studentlog.html'">STUDENT LOG</button>
+ <button class="box-button" onclick="location.href='summarychart.html'">SUMMARY CHART</button>
+    
+
+<button class="box-button" onclick="logout()">LOGOUT</button>
+
+    </div>
+ 
     <div class="main-content">
       <h1>Borrowed Books</h1>
+       <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by book name or borrower...">
+      </div>
       <div class="card-container" id="borrowedCardList"></div>
     </div>
   </div>
+<script>
+  const role = sessionStorage.getItem("role");
 
-  <script>
-    async function fetchBorrowedBooks() {
-      const res = await fetch("http://localhost:3000/due", {
-        credentials: "include"
-      });
-      const books = await res.json();
-      renderBooks(books);
+  if (role !== "ADMIN") {
+    alert("Access denied. Please login as Admin.");
+    window.location.href = "login.html";
+  }
+  let allBooks = []; // 🔁 Store all fetched books here
+
+  async function fetchBorrowedBooks() {
+    const res = await fetch("http://localhost:3000/due", {
+      credentials: "include"
+    });
+    const books = await res.json();
+    allBooks = books; // 🟢 Save to global
+    renderBooks(allBooks);
+  }
+
+  function renderBooks(books) {
+    const container = document.getElementById("borrowedCardList");
+    container.innerHTML = "";
+
+    books.forEach(book => {
+      const status = book.returned
+        ? "Returned"
+        : new Date(book.dueDate) < new Date()
+        ? "Fined"
+        : "Due";
+
+      const card = document.createElement("div");
+      card.className = "borrow-card";
+
+      card.innerHTML = `
+        <h3>${book.bookName}</h3>
+        <div class="meta">By ${book.author}</div>
+        <div class="meta">Issued: ${book.issueDate}</div>
+        <div class="meta">Due: ${book.dueDate}</div>
+        <div class="meta">Borrower: ${book.borrowedBy} (${book.email})</div>
+        <div class="status ${status.toLowerCase()}">${status}</div>
+        ${!book.returned ? `<button onclick="markAsReturned(${book.borrowId}, ${book.bookId})">Mark as Returned</button>` : ""}
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  document.getElementById("searchInput").addEventListener("input", function () {
+    const query = this.value.toLowerCase();
+
+    const filtered = allBooks.filter(book =>
+      (book.bookName || "").toLowerCase().includes(query) ||
+      (book.borrowedBy || "").toLowerCase().includes(query)
+    );
+
+    renderBooks(filtered);
+  });
+
+  async function markAsReturned(borrowId, bookId) {
+    const res = await fetch(`http://localhost:3000/return/${borrowId}`, {
+      method: "POST"
+    });
+    if (res.ok) {
+      alert("Marked as returned");
+      fetchBorrowedBooks(); // Refresh list
+    } else {
+      alert("Failed to update");
     }
+  }
 
-    function renderBooks(books) {
-      const container = document.getElementById("borrowedCardList");
-      container.innerHTML = "";
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = 'login.html';
+  }
 
-      books.forEach(book => {
-        const status = book.returned
-          ? "Returned"
-          : new Date(book.dueDate) < new Date()
-          ? "Fined"
-          : "Due";
+  fetchBorrowedBooks(); // Initial load
+</script>
 
-        const card = document.createElement("div");
-        card.className = "borrow-card";
-
-        card.innerHTML = `
-          <h3>${book.bookName}</h3>
-          <div class="meta">By ${book.author}</div>
-          <div class="meta">Issued: ${book.issueDate}</div>
-          <div class="meta">Due: ${book.dueDate}</div>
-          <div class="meta">Borrower: ${book.borrowedBy} (${book.email})</div>
-          <div class="status ${status.toLowerCase()}">${status}</div>
-          ${!book.returned ? `<button onclick="markAsReturned(${book.borrowId}, ${book.bookId})">Mark as Returned</button>` : ""}
-        `;
-
-        container.appendChild(card);
-      });
-    }
-
-    async function markAsReturned(borrowId, bookId) {
-      const res = await fetch(`http://localhost:3000/return/${borrowId}`, {
-        method: "POST"
-      });
-      if (res.ok) {
-        alert("Marked as returned");
-        fetchBorrowedBooks();
-      } else {
-        alert("Failed to update");
-      }
-    }
-
-    fetchBorrowedBooks();
-  </script>
 </body>
 </html>

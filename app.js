@@ -296,23 +296,23 @@ app.delete('/books/:id', (req, res) => {
   });
 });
 app.post('/borrow', (req, res) => {
-  const userId = parseInt(req.body.userId);
-  const bookId = parseInt(req.body.bookId);
-  const borrowDate = req.body.borrowDate;
+  const userId = parseInt(req.body.userId);  // Get userId from the request body
+  const bookId = parseInt(req.body.bookId);  // Get bookId from the request body
+  const borrowDate = req.body.borrowDate;    // Get borrowDate from the request body
 
   if (!userId || !bookId || !borrowDate) {
-    return res.status(400).json({ message: 'Missing required fields.' });
+    return res.status(400).json({ message: 'Missing required fields: userId, bookId, or borrowDate.' });
   }
 
-  const issueDate = borrowDate;
-  const dueDate = new Date(new Date(issueDate).getTime() + 7 * 24 * 60 * 60 * 1000)
+  const issueDate = borrowDate;  // Assuming borrowDate is in the correct format (e.g., "YYYY-MM-DD")
+  const dueDate = new Date(new Date(issueDate).getTime() + 7 * 24 * 60 * 60 * 1000)  // Add 7 days
     .toISOString()
-    .split('T')[0];
+    .split('T')[0];  // Format as "YYYY-MM-DD"
 
   // Check available copies of the book
   const checkQuery = `SELECT availableCopies FROM books WHERE id = ?`;
   db.get(checkQuery, [bookId], (err, row) => {
-    if (err) return res.status(500).json({ message: 'Database error.' });
+    if (err) return res.status(500).json({ message: 'Database error while checking available copies.' });
 
     if (!row || row.availableCopies <= 0) {
       return res.status(400).json({ message: 'No available copies left for this book.' });
@@ -324,29 +324,30 @@ app.post('/borrow', (req, res) => {
       VALUES (?, ?, ?, ?, 0)
     `;
     db.run(borrowQuery, [userId, bookId, issueDate, dueDate], function (err) {
-      if (err) return res.status(500).json({ message: 'Failed to borrow book.' });
+      if (err) return res.status(500).json({ message: 'Failed to borrow book: ' + err.message });
 
-      const borrowId = this.lastID;
+      const borrowId = this.lastID;  // Get the ID of the newly inserted borrow record
 
       // Update available copies in the books table
       const updateQuery = `UPDATE books SET availableCopies = availableCopies - 1 WHERE id = ? AND availableCopies > 0`;
       db.run(updateQuery, [bookId], function (err2) {
-        if (err2) return res.status(500).json({ message: 'Borrowed but update failed.' });
+        if (err2) return res.status(500).json({ message: 'Database error while updating available copies.' });
 
         if (this.changes === 0) {
-          return res.status(400).json({ message: 'Race condition — no copies left.' });
+          return res.status(400).json({ message: 'No copies left due to race condition.' });
         }
 
-        // Get the book details
+        // Fetch book details
         const bookQuery = `SELECT name AS bookName, author FROM books WHERE id = ?`;
         db.get(bookQuery, [bookId], (err3, book) => {
-          if (err3) return res.status(500).json({ message: 'Error fetching book details.' });
+          if (err3) return res.status(500).json({ message: 'Failed to fetch book details.' });
 
-          // Get the user details (borrowedBy)
+          // Fetch user details (borrowedBy)
           const userQuery = `SELECT username AS borrowedBy FROM users WHERE id = ?`;
           db.get(userQuery, [userId], (err4, user) => {
-            if (err4) return res.status(500).json({ message: 'Error fetching user details.' });
+            if (err4) return res.status(500).json({ message: 'Failed to fetch user details.' });
 
+            // Respond with success
             res.status(201).json({
               message: 'Book borrowed successfully.',
               borrowId: borrowId,
@@ -364,6 +365,17 @@ app.post('/borrow', (req, res) => {
 });
 
 
+app.get('/api/get-user-info', (req, res) => {
+  const userId = req.query.id;
+
+  db.get('SELECT username, email FROM users WHERE id = ?', [userId], (err, row) => {
+    if (err) {
+      res.status(500).send('Error querying the database');
+    } else {
+      res.json(row);
+    }
+  });
+});
 
 
 app.get('/borrowed', (req, res) => {
@@ -464,6 +476,11 @@ app.get('/due', (req, res) => {
 
 app.post('/return/:borrowId', (req, res) => {
   const borrowId = req.params.borrowId;
+  console.log('Received borrowId:', borrowId);
+
+  const sqlGetBook = `
+    SELECT book_id, returned FROM borrowed_books WHERE id = ?
+  `;
 
   const sqlUpdate = `
     UPDATE borrowed_books
@@ -471,47 +488,44 @@ app.post('/return/:borrowId', (req, res) => {
     WHERE id = ?
   `;
 
-  const sqlGetBook = `
-    SELECT book_id, returned FROM borrowed_books WHERE id = ?
-  `;
-
   const sqlIncreaseStock = `
     UPDATE books SET availableCopies = availableCopies + 1 WHERE id = ?
   `;
 
-  // Start transaction
   db.serialize(() => {
     db.run("BEGIN TRANSACTION");
 
-    db.run(sqlUpdate, [borrowId], function (err) {
-      if (err) {
+    // First: Get borrow record
+    db.get(sqlGetBook, [borrowId], (err, row) => {
+      if (err || !row) {
         db.run("ROLLBACK");
-        return res.status(500).json({ error: 'Failed to mark as returned' });
+        console.error('Error fetching borrowed book:', err ? err.message : 'No row found');
+        return res.status(500).json({ error: 'Borrow record not found' });
       }
 
-      db.get(sqlGetBook, [borrowId], (err, row) => {
-        if (err || !row) {
+      // Check if already returned
+      if (row.returned === 1) {
+        db.run("ROLLBACK");
+        return res.status(400).json({ error: 'Book already marked as returned' });
+      }
+
+      // Second: Mark as returned
+      db.run(sqlUpdate, [borrowId], function (err2) {
+        if (err2) {
           db.run("ROLLBACK");
-          return res.status(500).json({ error: 'Borrow record not found' });
+          console.error('Error updating borrowed_books:', err2.message);
+          return res.status(500).json({ error: 'Failed to mark as returned' });
         }
 
-        // Check if the book has already been returned
-        if (row.returned === 1) {
-          db.run("ROLLBACK");
-          return res.status(400).json({ error: 'Book already marked as returned' });
-        }
-
-        // Increase stock of the book
-        db.run(sqlIncreaseStock, [row.book_id], function (err2) {
-          if (err2) {
+        // Third: Increase stock
+        db.run(sqlIncreaseStock, [row.book_id], function (err3) {
+          if (err3) {
             db.run("ROLLBACK");
+            console.error('Error updating stock:', err3.message);
             return res.status(500).json({ error: 'Failed to update stock' });
           }
 
-          // Commit transaction
           db.run("COMMIT");
-
-          // Respond with success
           res.json({ success: true, message: 'Book marked as returned successfully' });
         });
       });
