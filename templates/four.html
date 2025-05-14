@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LibStack UI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f9f9f9;
+      padding: 40px;
+    }
+
+    .container {
+      display: flex;
+      max-width: 1400px;
+      width: 100%;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 15px;
+      overflow: hidden;
+      background-color: white;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background-color: #fff;
+      padding: 30px 20px;
+      border-right: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sidebar .logo {
+      font-size: 24px;
+      font-weight: 600;
+      color: #301179;
+      margin-bottom: 40px;
+    }
+
+    .sidebar .nav-button {
+      background-color: #301179;
+      color: white;
+      padding: 16px;
+      margin-bottom: 25px;
+      border: none;
+      border-radius: 12px;
+      width: 100%;
+      text-align: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar .nav-button:hover {
+      background-color: #4a2fb0;
+    }
+
+    /* Main content */
+    .main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .header {
+      background-color: #301179;
+      color: white;
+      padding: 25px 35px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    .header .title {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .header .user {
+      font-size: 18px;
+    }
+
+    .hamburger {
+      display: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 65px;
+      right: 30px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      z-index: 1000;
+      flex-direction: column;
+    }
+
+    .dropdown-menu button {
+      background-color: white;
+      color: #301179;
+      border: none;
+      padding: 12px 20px;
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+
+    .dropdown-menu button:hover {
+      background-color: #f3f3f3;
+    }
+
+    .content {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .search-bar {
+      width: 100%;
+      max-width: 500px;
+      padding: 14px 20px;
+      margin-bottom: 40px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    .books-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .books-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .book-card {
+      background-color: white;
+      width: 220px;
+      padding: 25px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .book-card p {
+      font-size: 14px;
+      color: #555;
+      margin: 4px 0;
+      text-align: center;
+    }
+
+    .book-card button {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #301179;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .book-card .not-available {
+      background-color: #AAA8B0;
+      cursor: not-allowed;
+    }
+
+    .book-title {
+      font-weight: 600;
+      margin-top: 12px;
+      font-size: 16px;
+      color: #301179;
+      text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 20px;
+      }
+
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .hamburger {
+        display: block;
+      }
+
+      .header .title {
+        font-size: 18px;
+      }
+
+      .main {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">📖 LibStack</div>
+    <button class="nav-button" onclick="window.location.href='availablebooksuser.html'">HOME</button>
+
+      <button class="nav-button">ALL BOOKS</button>
+      <button class="nav-button">BOOKS AVAILABLE</button>
+      <button class="nav-button">BOOKS BORROWED</button>
+      <button class="nav-button">CONTACT</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <div class="header">
+        <div class="title">ALL THE BOOKS</div>
+        <div class="hamburger" onclick="toggleMenu()">☰</div>
+        <div class="user">👤 Welcome</div>
+
+        <div id="dropdown" class="dropdown-menu">
+        <button class="nav-button" onclick="window.location.href='availablebooksuser.html'">HOME</button>
+
+          <button>ALL BOOKS</button>
+          <button>BOOKS AVAILABLE</button>
+           <button class="nav-button" onclick="window.location.href='Rulesuser.html'">BOOKS BORROWED</button>    
+          <button>CONTACT</button>
+        </div>
+      </div>
+
+      <div class="content">
+        <input class="search-bar" type="text" placeholder="Search books..." />
+
+        <div class="books-wrapper">
+          <!-- First Row -->
+          <div class="books-row">
+            <div class="book-card">
+              <p>By Surekha</p>
+              <p>Published in 2019</p>
+              <button>Borrow Book</button>
+              <div class="book-title">OOPS CONCEPTS</div>
+            </div>
+
+            <div class="book-card">
+              <p>By Harshi</p>
+              <p>Published in 2025</p>
+              <button class="not-available">Not Available</button>
+              <div class="book-title">DATABASE</div>
+            </div>
+
+            <div class="book-card">
+              <p>By Harshi</p>
+              <p>Published in 2025</p>
+              <button>Borrow Book</button>
+              <div class="book-title">Design Analysis</div>
+            </div>
+          </div>
+
+          <!-- Second Row -->
+          <div class="books-row">
+            <div class="book-card">
+              <p>By Surekha</p>
+              <p>Published in 2021</p>
+              <button class="not-available">Not Available</button>
+              <div class="book-title">Operating System</div>
+            </div>
+
+            <div class="book-card">
+              <p>By Surekha</p>
+              <p>Published in 2019</p>
+              <button>Borrow Book</button>
+              <div class="book-title">Design Analysis</div>
+            </div>
+
+            <div class="book-card">
+              <p>By Harshi</p>
+              <p>Published in 2025</p>
+              <button>Borrow Book</button>
+              <div class="book-title">DATABASE</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      const menu = document.getElementById('dropdown');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    // Close menu on outside click
+    document.addEventListener('click', function(event) {
+      const menu = document.getElementById('dropdown');
+      const hamburger = document.querySelector('.hamburger');
+      if (!menu.contains(event.target) && !hamburger.contains(event.target)) {
+        menu.style.display = 'none';
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LibStack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f5;
+      color: #301179;
+    }
+
+    header {
+      background-color: #301179;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+
+    header .logo i {
+      margin-right: 0.5rem;
+    }
+
+    .container {
+      display: flex;
+    }
+
+    .sidebar {
+      width: 200px;
+      background-color: #301179;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      color: white;
+      height: 100vh;
+    }
+
+    .sidebar button {
+      background: #301179;
+      border: none;
+      color: white;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+    }
+
+    .main-content h2 {
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .filters input[type="text"] {
+      padding: 0.5rem 1rem;
+      border: 1px solid #aaa8b0;
+      border-radius: 25px;
+      outline: none;
+      min-width: 200px;
+    }
+
+    .book-list {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .book-card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 1rem;
+      min-width: 200px;
+    }
+
+    .book-card h3 {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .book-card p {
+      font-size: 0.9rem;
+      margin: 0.3rem 0;
+    }
+
+    .book-card .status {
+      background-color: #aaa8b0;
+      color: white;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      display: inline-block;
+      margin: 0.5rem 0;
+    }
+
+    .book-card button {
+      margin: 0.3rem 0.2rem;
+      padding: 0.4rem 1rem;
+      background-color: #301179;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .add-book-form {
+      background-color: #301179;
+      color: white;
+      padding: 2rem;
+      border-radius: 20px;
+      max-width: 300px;
+      margin-left: 2rem;
+    }
+
+    .add-book-form input {
+      width: 100%;
+      padding: 0.7rem;
+      margin: 0.5rem 0;
+      border: none;
+      border-radius: 20px;
+      outline: none;
+    }
+
+    .add-book-form button {
+      width: 100%;
+      padding: 0.7rem;
+      background-color: white;
+      color: #301179;
+      border: none;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <i>📖</i> LibStack
+    </div>
+    <div class="user">
+      <i>👤</i> welcome
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="sidebar">
+      <button>BOOKS</button>
+      <button>DUES OF BOOKS</button>
+      <button>STUDENT LOG</button>
+    </div>
+
+    <div class="main-content">
+  <h2>ALL THE BOOKS</h2>
+  <div class="filters">
+    <input type="text" id="filter-name" placeholder="Filter by book name">
+    <input type="text" id="filter-author" placeholder="Filter by author">
+    <input type="text" id="filter-publisher" placeholder="Filter by publisher name">
+    <input type="text" id="filter-subject" placeholder="Filter by the subject">
+    <button id="filter-button">Filter</button>
+  </div>
+
+  <div class="book-list" id="book-list"></div>
+</div>
+
+<div class="add-book-form">
+  <h3>ADD A NEW BOOK</h3>
+  <input type="text" id="book-name" placeholder="Enter the book name">
+  <input type="text" id="author-name" placeholder="Enter the author name">
+  <input type="text" id="subject" placeholder="Enter the subject here">
+  <input type="text" id="publisher" placeholder="Enter the publisher">
+  <input type="number" id="published-year" placeholder="Enter the published year">
+  <input type="number" id="available-copies" placeholder="No. of available copies">
+  <button id="submit-book">SUBMIT</button>
+</div>
+
+<script>
+  const bookListContainer = document.getElementById('book-list');
+
+  // Fetch and display books with optional filters
+  const fetchBooks = (filters = {}) => {
+    const query = new URLSearchParams(filters).toString();
+    fetch(`http://localhost:3000/books?${query}`)
+      .then(response => response.json())
+      .then(books => {
+        bookListContainer.innerHTML = '';
+        if (books.length === 0) {
+          bookListContainer.innerHTML = '<p>No books found.</p>';
+          return;
+        }
+        books.forEach(book => {
+          const bookCard = document.createElement('div');
+          bookCard.classList.add('book-card');
+
+          bookCard.innerHTML = `
+            <h3>${book.name}</h3>
+            <p>BY ${book.author}</p>
+            <p>PUBLISHED IN ${book.publishedYear}</p>
+            <p>Available copies: ${book.availableCopies}</p>
+            <button onclick="logBook(${book.id})">log</button>
+            <button onclick="editBook(${book.id})">edit</button>
+            <button onclick="deleteBook(${book.id})" style="background-color: #c0392b;">delete</button>
+          `;
+
+          bookListContainer.appendChild(bookCard);
+        });
+      })
+      .catch(error => console.error('Error fetching books:', error));
+  };
+
+  // Filter button click
+  document.getElementById('filter-button').addEventListener('click', () => {
+    const filters = {
+      name: document.getElementById('filter-name').value,
+      author: document.getElementById('filter-author').value,
+      publisher: document.getElementById('filter-publisher').value,
+      subject: document.getElementById('filter-subject').value
+    };
+    fetchBooks(filters);
+  });
+
+  // Add a new book
+  document.getElementById('submit-book').addEventListener('click', () => {
+    const name = document.getElementById('book-name').value;
+    const author = document.getElementById('author-name').value;
+    const subject = document.getElementById('subject').value;
+    const publisher = document.getElementById('publisher').value;
+    const publishedYear = document.getElementById('published-year').value;
+    const availableCopies = document.getElementById('available-copies').value;
+
+    if (!name || !author || !subject || !publisher || !publishedYear || !availableCopies) {
+      alert('Please fill in all fields.');
+      return;
+    }
+
+    const bookData = { name, author, subject, publisher, publishedYear, availableCopies };
+
+    fetch('http://localhost:3000/books', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bookData)
+    })
+    .then(response => response.json())
+    .then(() => {
+      fetchBooks();  // Refresh list after adding new book
+      document.querySelectorAll('.add-book-form input').forEach(input => input.value = '');
+    })
+    .catch(error => console.error('Error adding book:', error));
+  });
+
+  // Function to log book (for logging purposes)
+  function logBook(id) {
+    alert(`Log for book ID ${id}`);
+  }
+
+  // Function to edit book (to be implemented)
+  function editBook(id) {
+    alert(`Edit book with ID ${id}`);
+    window.location.href = `edit.html?id=${id}`;
+  }
+
+  // Function to delete a book
+  function deleteBook(id) {
+    const confirmDelete = confirm("Are you sure you want to delete this book?");
+    if (!confirmDelete) return;
+
+    fetch(`http://localhost:3000/books/${id}`, {
+      method: 'DELETE'
+    })
+    .then(() => fetchBooks())  // Refresh book list
+    .catch(error => console.error('Error deleting book:', error));
+  }
+
+  // Initially fetch and display all books
+  fetchBooks();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LibStack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+   * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f9f9f9;
+      padding: 40px;
+    }
+
+    .container {
+      display: flex;
+      max-width: 1400px;
+      width: 100%;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 15px;
+      overflow: hidden;
+      background-color: white;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background-color: #fff;
+      padding: 30px 20px;
+      border-right: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sidebar .logo {
+      font-size: 24px;
+      font-weight: 600;
+      color: #301179;
+      margin-bottom: 40px;
+    }
+
+    .sidebar .nav-button {
+      background-color: #301179;
+      color: white;
+      padding: 16px;
+      margin-bottom: 25px;
+      border: none;
+      border-radius: 12px;
+      width: 100%;
+      text-align: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar .nav-button:hover {
+      background-color: #4a2fb0;
+    }
+
+    .main {
+      flex-grow: 1;
+      padding-left: 30px;
+    }
+
+    .main-content {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+
+    .books-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      flex: 1;
+    }
+
+    .book-card {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .book-card h3 {
+      font-size: 16px;
+      color: #301179;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .book-card p {
+      font-size: 12px;
+      color: #AAA8B0;
+      margin-bottom: 5px;
+    }
+
+    .book-card button {
+      background-color: #301179;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .filter-section {
+      background-color: white;
+      padding: 20px;
+      width: 280px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      height: fit-content;
+    }
+
+    .filter-section h2 {
+      font-size: 18px;
+      color: #301179;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .filter-section input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #AAA8B0;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+
+    .filter-section button {
+      background-color: #301179;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        padding: 0;
+      }
+
+      .sidebar {
+        display: none;
+        width: 100%;
+        border-right: none;
+        padding: 20px;
+      }
+
+      .sidebar.active {
+        display: flex;
+      }
+
+      .hamburger {
+        display: block;
+      }
+
+      .main {
+        padding: 20px;
+      }
+
+      .main-content {
+        flex-direction: column;
+      }
+
+      .books-section {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-section {
+        width: 100%;
+      }
+    }
+    .main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .header {
+      background-color: #301179;
+      color: white;
+      padding: 25px 35px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    .header .title {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .header .user {
+      font-size: 18px;
+    }
+
+    .hamburger {
+      display: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 65px;
+      right: 30px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      z-index: 1000;
+      flex-direction: column;
+    }
+
+    .dropdown-menu button {
+      background-color: white;
+      color: #301179;
+      border: none;
+      padding: 12px 20px;
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+
+    .dropdown-menu button:hover {
+      background-color: #f3f3f3;
+    }
+    .content {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .search-bar {
+      width: 100%;
+      max-width: 500px;
+      padding: 14px 20px;
+      margin-bottom: 40px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    .books-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .books-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .book-card {
+      background-color: white;
+      width: 220px;
+      padding: 25px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .book-card p {
+      font-size: 14px;
+      color: #555;
+      margin: 4px 0;
+      text-align: center;
+    }
+
+    .book-card button {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #301179;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .book-card .not-available {
+      background-color: #AAA8B0;
+      cursor: not-allowed;
+    }
+
+    .book-title {
+      font-weight: 600;
+      margin-top: 12px;
+      font-size: 16px;
+      color: #301179;
+      text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 20px;
+      }
+
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .hamburger {
+        display: block;
+      }
+
+      .header .title {
+        font-size: 18px;
+      }
+
+      .main {
+        width: 100%;
+      }
+    }
+  </style>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">📖 LibStack</div>
+    <button class="nav-button" onclick="window.location.href='availablebooksuser.html'">HOME</button>
+
+      <button class="nav-button">ALL BOOKS</button>
+      <button class="nav-button">BOOKS AVAILABLE</button>
+      <button class="nav-button">BOOKS BORROWED</button>
+      <button class="nav-button">CONTACT</button>
+    </div>
+
+
+    <div class="main">
+     
+        <div class="header">
+        <div class="title">ALL THE BOOKS</div>
+        <div class="hamburger" onclick="toggleMenu()">☰</div>
+        <div class="user">👤 Welcome</div>
+
+        <div id="dropdown" class="dropdown-menu">
+        <button class="nav-button" onclick="window.location.href='availablebooksuser.html'">HOME</button>
+
+          <button>ALL BOOKS</button>
+          <button>BOOKS AVAILABLE</button>
+           <button class="nav-button" onclick="window.location.href='Rulesuser.html'">BOOKS BORROWED</button>    
+          <button>CONTACT</button>
+        </div>
+      </div>
+
+        <div class="books-section" id="book-list">
+          <!-- Book cards will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+  
+  const bookListContainer = document.getElementById('book-list');
+
+  // Load books initially
+  fetchBooks();
+
+  function fetchBooks(filters = {}) {
+    const query = new URLSearchParams(filters).toString();
+    fetch(`http://localhost:3000/books?${query}`)
+      .then(response => response.json())
+      .then(books => {
+        bookListContainer.innerHTML = '';
+        if (books.length === 0) {
+          bookListContainer.innerHTML = '<p>No books found.</p>';
+          return;
+        }
+
+        books.forEach(book => {
+          const bookCard = document.createElement('div');
+          bookCard.classList.add('book-card');
+          bookCard.id = `book-${book.id}`;
+
+          bookCard.innerHTML = `
+            <h3>${book.name}</h3>
+            <p>BY ${book.author}</p>
+            <p>PUBLISHED IN ${book.publishedYear}</p>
+            <p class="available-copies">Available copies: <span>${book.availableCopies}</span></p>
+            <button onclick="borrowBook(${book.id}, '${book.name}')">BORROW</button>
+          `;
+
+          bookListContainer.appendChild(bookCard);
+        });
+      })
+      .catch(error => console.error('Error fetching books:', error));
+  }
+
+  function borrowBook(bookId, bookName) {
+    const userId = sessionStorage.getItem('id');
+    if (!userId) {
+      alert("You need to log in first.");
+      return;
+    }
+
+    const bookCard = document.getElementById(`book-${bookId}`);
+    const availableSpan = bookCard.querySelector('.available-copies span');
+    const availableCopies = parseInt(availableSpan.textContent);
+
+    if (availableCopies <= 0) {
+      alert('No copies available to borrow.');
+      return;
+    }
+
+    const issueDate = new Date();
+    const dueDate = new Date();
+    dueDate.setDate(issueDate.getDate() + 7);
+
+    const borrowData = {
+      userId: userId,
+      bookId: bookId,
+      issueDate: issueDate.toISOString().split('T')[0],
+      dueDate: dueDate.toISOString().split('T')[0]
+    };
+
+    fetch('http://localhost:3000/borrow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(borrowData)
+    })
+    .then(async response => {
+      const contentType = response.headers.get('content-type');
+      const isJson = contentType && contentType.includes('application/json');
+      const data = isJson ? await response.json() : {};
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to borrow book');
+      }
+
+      alert(`You have borrowed "${bookName}" successfully!`);
+
+      // Update available copies in the UI
+      availableSpan.textContent = availableCopies - 1;
+      if (availableCopies - 1 <= 0) {
+        bookCard.querySelector('button').disabled = true;
+      }
+
+      // Append borrow info only once
+      if (!bookCard.querySelector('.borrow-info')) {
+        const infoDiv = document.createElement('div');
+        infoDiv.classList.add('borrow-info');
+        infoDiv.innerHTML = `
+          <p><strong>Borrow ID:</strong> ${data.borrowId}</p>
+          <p><strong>Borrowed By:</strong> ${data.borrowedBy}</p>
+          <p><strong>Issue Date:</strong> ${borrowData.issueDate}</p>
+          <p><strong>Due Date:</strong> ${borrowData.dueDate}</p>
+        `;
+        bookCard.appendChild(infoDiv);
+      }
+    })
+    .catch(error => {
+      console.error('Error borrowing book:', error);
+      alert(`Failed to borrow book: ${error.message}`);
+    });
+  }
+</script>
+node

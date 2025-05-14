@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LibStack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+     * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      background-color: #f9f9f9;
+      padding: 40px;
+    }
+
+    .container {
+      display: flex;
+      max-width: 1400px;
+      width: 100%;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 15px;
+      overflow: hidden;
+      background-color: white;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background-color: #fff;
+      padding: 30px 20px;
+      border-right: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sidebar .logo {
+      font-size: 24px;
+      font-weight: 600;
+      color: #301179;
+      margin-bottom: 40px;
+    }
+
+    .sidebar .nav-button {
+      background-color: #301179;
+      color: white;
+      padding: 16px;
+      margin-bottom: 25px;
+      border: none;
+      border-radius: 12px;
+      width: 100%;
+      text-align: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar .nav-button:hover {
+      background-color: #4a2fb0;
+    }
+
+    /* Main content */
+    .main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background-color: #301179;
+      color: white;
+      padding: 25px 35px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header .title {
+      font-size: 26px;
+      font-weight: 600;
+    }
+
+    .header .user {
+      font-size: 18px;
+    }
+
+    .protocol-box {
+      background-color: #301179;
+      color: white;
+      padding: 30px;
+      border-radius: 20px;
+      width: 320px;
+    }
+
+    .protocol-box h3 {
+      margin-top: 0;
+    }
+
+    .borrowed-books {
+      flex: 1;
+    }
+
+    .borrowed-books h2 {
+      color: #301179;
+    }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .book-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .book-card h4 {
+      margin: 0;
+      color: #301179;
+    }
+
+    .book-card .meta {
+      font-size: 12px;
+      color: #AAA8B0;
+      margin: 5px 0;
+    }
+
+    .book-card .status {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .due {
+      background-color: #301179;
+      color: white;
+    }
+
+    .fined {
+      background-color: red;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">📖 LibStack</div>
+      <button class="nav-button">HOME</button>
+      <button class="nav-button">ALL BOOKS</button>
+      <button class="nav-button">BOOKS AVAILABLE</button>
+      <button class="nav-button">BOOKS BORROWED</button>
+      <button class="nav-button">CONTACT</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <div class="header">
+        <div class="title">ALL THE BOOKS</div>
+        <div class="user">👤 Welcome, <span id="username">User</span></div>
+      </div>
+
+      <div class="protocol-box">
+        <h3>PROTOCOLS TO BE FOLLOWED</h3>
+        <p>1. Borrow as many books as you need (no limit)</p>
+        <p>2. Return books within 7 days to avoid fines</p>
+      </div>
+
+      <div class="borrowed-books">
+        <h2>BORROWED BOOKS</h2>
+        <div class="book-grid" id="borrowed-books-grid">
+          <!-- Books will be dynamically inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const username = sessionStorage.getItem("username");
+      const userId = sessionStorage.getItem("id"); // <-- Correct key
+
+      // Show username
+      if (username) {
+        document.getElementById("username").textContent = username;
+      }
+
+      if (!userId) {
+        document.getElementById("borrowed-books-grid").innerHTML = "<p>You are not logged in.</p>";
+        return;
+      }
+
+      fetchBorrowedBooks(userId);
+    });
+
+    async function fetchBorrowedBooks(userId) {
+      const container = document.getElementById("borrowed-books-grid");
+      container.innerHTML = "<p>Loading borrowed books...</p>";
+
+      try {
+        const response = await fetch(`http://localhost:3000/rules?userId=${userId}`);
+
+        if (!response.ok) {
+          container.innerHTML = "<p>Unable to fetch borrowed books.</p>";
+          return;
+        }
+
+        const books = await response.json();
+        container.innerHTML = "";
+
+        if (books.length === 0) {
+          container.innerHTML = "<p>No borrowed books found.</p>";
+          return;
+        }
+
+        books.forEach(book => {
+          const card = document.createElement("div");
+          card.className = "book-card";
+          card.innerHTML = `
+            <h4>${book.bookName}</h4>
+            <div class="meta">
+              BY ${book.author}<br>
+              Issued: ${book.issueDate}
+            </div>
+            <div class="status due">Due: ${book.dueDate}</div>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (error) {
+        console.error("Failed to fetch borrowed books:", error);
+        container.innerHTML = "<p>Error loading books. Please try again later.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
