@@ -4,7 +4,7 @@
 
 ---
 
-## 🔧 Features
+## 🔧 Features:
 
 - 📖 Add and delete books.
 - 🕐 Track issued and returned books
