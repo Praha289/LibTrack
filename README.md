@@ -6,7 +6,7 @@
 
 ## 🔧 Features
 
-- 📖 Add and delete books
+- 📖 Add and delete books.
 - 🕐 Track issued and returned books
 - 👤 Manage users and due books with summary charts 
 - 🔍 Search and filter books by title or author
